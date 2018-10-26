@@ -5,7 +5,7 @@
         <div class="form-inputs">
           <v-select @change="userTypeChange" :items="userTypes" v-model="userType" label="Search By">
           </v-select>
-          <v-select :items="personItems" v-model="selectedPerson" :label="userType === 'User' ? 'Select User' : 'Select Patient'">
+          <v-select v-if="showSearchBySelect" :items="personItems" v-model="selectedPerson" :label="searchBySelectLabel">
           </v-select>
           <v-menu :nudge-right="40" transition="scale-transition" offset-y full-width min-width="290px">
             <v-text-field slot="activator" v-model="startDate" label="Start Date" readonly>
@@ -34,6 +34,7 @@
           <v-checkbox
             label="Include Access Logs"
             v-model="includeAccessLogs"
+            color="secondary"
           ></v-checkbox>
           <v-btn color="secondary">
             Search
@@ -47,6 +48,22 @@
 
 <script>
 export default {
+  computed: {
+    showSearchBySelect: function() {
+      return (
+        this.userType === 'User' ||
+        this.userType === 'Patient' ||
+        this.userType === 'Role'
+      );
+    },
+    searchBySelectLabel: function() {
+      return this.userType === 'User'
+        ? 'Select User'
+        : this.userType === 'Patient'
+          ? 'Select Patient'
+          : 'Select Role';
+    }
+  },
   data: () => {
     const today = new Date();
     const oneMonthBeforeToday = new Date();
@@ -56,7 +73,7 @@ export default {
     return {
       startDate: oneMonthBeforeToday.toISOString().substr(0, 10),
       endDate: today.toISOString().substr(0, 10),
-      userTypes: ['User', 'Patient'],
+      userTypes: ['User', 'Patient', 'Role', 'None'],
       userType: 'User',
       activityTypes: ['Activity 1', 'Activity 2', 'Activity 3'],
       selectedActivityTypes: [],
@@ -65,8 +82,109 @@ export default {
       commentText: '',
       userList: userList,
       patientList: ['Patient 1', 'Patient 2'],
+      roleList: ['Role 1', 'Role 2'],
       personItems: userList,
-      selectedPerson: ''
+      selectedPerson: '',
+      auditLogResults: [
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        },
+        {
+          date: new Date().toISOString().substr(0, 10),
+          user: 'User',
+          activity: 'Activity',
+          patient: 'Patient',
+          comment: 'Comment'
+        }
+      ]
     };
   },
   methods: {
@@ -90,8 +208,10 @@ export default {
     userTypeChange: function() {
       if (this.userType === 'User') {
         this.personItems = this.userList;
-      } else {
+      } else if (this.userType === 'Patient') {
         this.personItems = this.patientList;
+      } else {
+        this.personItems = this.roleList;
       }
     }
   }
