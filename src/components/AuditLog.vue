@@ -5,9 +5,9 @@
         <div class="form-inputs">
           <v-select @change="userTypeChange" :items="userTypes" v-model="userType" label="Search By">
           </v-select>
-          <v-select v-if="showSearchBySelect" :items="personItems" v-model="selectedPerson" :label="searchBySelectLabel" :item-text="searchBySelectName">
+          <v-select v-if="showSearchBySelect" :items="personItems" v-model="selectedPerson" :label="searchBySelectLabel" :item-value="searchBySelectValue" :item-text="searchBySelectName" return-object>
           </v-select>
-          <v-autocomplete v-if="userType === 'Patient'" :search-input.sync="patientSearchTerm" :items="patientList" label="Search Patients" item-text="fullName">
+          <v-autocomplete v-if="userType === 'Patient'" v-model="selectedPerson" :search-input.sync="patientSearchTerm" :items="patientList" label="Search Patients" item-text="fullName">
           </v-autocomplete>
           <v-menu :nudge-right="40" transition="scale-transition" offset-y full-width min-width="290px">
             <v-text-field slot="activator" v-model="startDate" label="Start Date" readonly>
@@ -38,7 +38,7 @@
             v-model="includeAccessLogs"
             color="secondary"
           ></v-checkbox>
-          <v-btn color="secondary">
+          <v-btn color="secondary" @click="search">
             Search
           </v-btn>
         </div>
@@ -61,224 +61,10 @@
 </template>
 
 <script>
-const roles = [
-  {
-    isDefault: true,
-    role_id: -10,
-    title: 'Power User',
-    inactive: false,
-    accessMap: {
-      'Traffic Manager': 'READ_WRITE',
-      'EMR - Chronic Conditions': 'READ_WRITE',
-      'EMR - Medical History': 'READ_WRITE',
-      Documents: 'READ_WRITE',
-      'Patient Diagnostics': 'READ_WRITE',
-      'Reporting - Scheduling': 'READ_WRITE',
-      'EMR - Virtual Chart': 'READ_WRITE',
-      'Billing - General': 'READ_WRITE',
-      'EMR - Day Sheet': 'READ_WRITE',
-      'EMR - Labs': 'READ_WRITE',
-      'Reporting - Clinical': 'READ_WRITE',
-      'EMR - Forms': 'READ_WRITE',
-      'Patient Demographics': 'READ_WRITE',
-      'Wait List': 'READ_WRITE',
-      Messaging: 'READ_WRITE',
-      'EMR - Clinical Notes': 'READ_WRITE',
-      'Billing - Private \u0026 3rd Party': 'READ_WRITE',
-      Scheduling: 'READ_WRITE',
-      'EMR - Medications \u0026 Allergies': 'READ_WRITE',
-      'Reporting - Billing': 'READ_WRITE'
-    }
-  },
-  {
-    isDefault: true,
-    role_id: -9,
-    title: 'Reception',
-    inactive: false,
-    accessMap: {
-      'Traffic Manager': 'READ_WRITE',
-      'EMR - Chronic Conditions': 'NO_ACCESS',
-      'EMR - Medical History': 'NO_ACCESS',
-      Documents: 'NO_ACCESS',
-      'Patient Diagnostics': 'NO_ACCESS',
-      'Reporting - Scheduling': 'READ_WRITE',
-      'EMR - Virtual Chart': 'NO_ACCESS',
-      'Billing - General': 'NO_ACCESS',
-      'EMR - Day Sheet': 'NO_ACCESS',
-      'EMR - Labs': 'NO_ACCESS',
-      'Reporting - Clinical': 'NO_ACCESS',
-      'EMR - Forms': 'NO_ACCESS',
-      'Patient Demographics': 'READ_WRITE',
-      'Wait List': 'READ_WRITE',
-      Messaging: 'READ_WRITE',
-      'EMR - Clinical Notes': 'NO_ACCESS',
-      'Billing - Private \u0026 3rd Party': 'NO_ACCESS',
-      Scheduling: 'READ_WRITE',
-      'EMR - Medications \u0026 Allergies': 'NO_ACCESS',
-      'Reporting - Billing': 'NO_ACCESS'
-    }
-  },
-  {
-    isDefault: true,
-    role_id: -8,
-    title: 'Billing',
-    inactive: false,
-    accessMap: {
-      'Traffic Manager': 'READ_ONLY',
-      'EMR - Chronic Conditions': 'NO_ACCESS',
-      'EMR - Medical History': 'NO_ACCESS',
-      Documents: 'NO_ACCESS',
-      'Patient Diagnostics': 'NO_ACCESS',
-      'Reporting - Scheduling': 'READ_WRITE',
-      'EMR - Virtual Chart': 'NO_ACCESS',
-      'Billing - General': 'READ_WRITE',
-      'EMR - Day Sheet': 'NO_ACCESS',
-      'EMR - Labs': 'NO_ACCESS',
-      'Reporting - Clinical': 'NO_ACCESS',
-      'EMR - Forms': 'NO_ACCESS',
-      'Patient Demographics': 'READ_WRITE',
-      'Wait List': 'READ_ONLY',
-      Messaging: 'READ_WRITE',
-      'EMR - Clinical Notes': 'NO_ACCESS',
-      'Billing - Private \u0026 3rd Party': 'READ_WRITE',
-      Scheduling: 'READ_ONLY',
-      'EMR - Medications \u0026 Allergies': 'NO_ACCESS',
-      'Reporting - Billing': 'READ_WRITE'
-    }
-  },
-  {
-    isDefault: true,
-    role_id: -7,
-    title: 'Nurse',
-    inactive: false,
-    accessMap: {
-      'Traffic Manager': 'READ_WRITE',
-      'EMR - Chronic Conditions': 'NO_ACCESS',
-      'EMR - Medical History': 'NO_ACCESS',
-      Documents: 'NO_ACCESS',
-      'Patient Diagnostics': 'NO_ACCESS',
-      'Reporting - Scheduling': 'READ_WRITE',
-      'EMR - Virtual Chart': 'NO_ACCESS',
-      'Billing - General': 'NO_ACCESS',
-      'EMR - Day Sheet': 'NO_ACCESS',
-      'EMR - Labs': 'NO_ACCESS',
-      'Reporting - Clinical': 'NO_ACCESS',
-      'EMR - Forms': 'NO_ACCESS',
-      'Patient Demographics': 'READ_WRITE',
-      'Wait List': 'READ_WRITE',
-      Messaging: 'READ_WRITE',
-      'EMR - Clinical Notes': 'NO_ACCESS',
-      'Billing - Private \u0026 3rd Party': 'NO_ACCESS',
-      Scheduling: 'READ_WRITE',
-      'EMR - Medications \u0026 Allergies': 'READ_ONLY',
-      'Reporting - Billing': 'NO_ACCESS'
-    }
-  },
-  {
-    isDefault: true,
-    role_id: -5,
-    title: 'Administrator',
-    inactive: false,
-    accessMap: {
-      'Traffic Manager': 'READ_WRITE',
-      'EMR - Chronic Conditions': 'NO_ACCESS',
-      'EMR - Medical History': 'NO_ACCESS',
-      Documents: 'NO_ACCESS',
-      'Patient Diagnostics': 'NO_ACCESS',
-      'Reporting - Scheduling': 'NO_ACCESS',
-      'EMR - Virtual Chart': 'NO_ACCESS',
-      'Billing - General': 'NO_ACCESS',
-      'EMR - Day Sheet': 'NO_ACCESS',
-      'EMR - Labs': 'NO_ACCESS',
-      'Reporting - Clinical': 'NO_ACCESS',
-      'EMR - Forms': 'NO_ACCESS',
-      'Patient Demographics': 'READ_WRITE',
-      'Wait List': 'READ_WRITE',
-      Messaging: 'READ_WRITE',
-      'EMR - Clinical Notes': 'NO_ACCESS',
-      'Billing - Private \u0026 3rd Party': 'NO_ACCESS',
-      Scheduling: 'READ_WRITE',
-      'EMR - Medications \u0026 Allergies': 'NO_ACCESS',
-      'Reporting - Billing': 'NO_ACCESS'
-    }
-  },
-  {
-    isDefault: true,
-    role_id: -1,
-    title: 'Physician',
-    inactive: false,
-    accessMap: {
-      'Traffic Manager': 'READ_WRITE',
-      'EMR - Chronic Conditions': 'READ_WRITE',
-      'EMR - Medical History': 'READ_WRITE',
-      Documents: 'READ_WRITE',
-      'Patient Diagnostics': 'READ_WRITE',
-      'Reporting - Scheduling': 'READ_WRITE',
-      'EMR - Virtual Chart': 'READ_WRITE',
-      'Billing - General': 'READ_WRITE',
-      'EMR - Day Sheet': 'READ_WRITE',
-      'EMR - Labs': 'READ_WRITE',
-      'Reporting - Clinical': 'READ_WRITE',
-      'EMR - Forms': 'READ_WRITE',
-      'Patient Demographics': 'READ_WRITE',
-      'Wait List': 'READ_WRITE',
-      Messaging: 'READ_WRITE',
-      'EMR - Clinical Notes': 'READ_WRITE',
-      'Billing - Private \u0026 3rd Party': 'READ_WRITE',
-      Scheduling: 'READ_WRITE',
-      'EMR - Medications \u0026 Allergies': 'READ_WRITE',
-      'Reporting - Billing': 'READ_WRITE'
-    }
-  }
-];
+const roles = JSON.parse(window.support.getRoles()); 
+const users =  JSON.parse(window.support.getUsers()); 
 
-const users = [
-  {
-    toString: 'DavidDoctor',
-    toolTip: 'DavidDoctor',
-    value: 'DavidDoctor',
-    style: 1
-  },
-  {
-    toString: 'MandyMedic',
-    toolTip: 'MandyMedic',
-    value: 'MandyMedic',
-    style: 1
-  },
-  {
-    toString: 'RitaReception',
-    toolTip: 'RitaReception',
-    value: 'RitaReception',
-    style: 1
-  }
-];
-
-const patients = [
-  {
-    type: 'Patient',
-    values: {
-      fname: 'Sandi',
-      status_description: 'Active',
-      address: '1723 Beach Blvd.',
-      birthdate: '1958-Nov-11',
-      city: 'Suntown',
-      sex: 'F',
-      status_color: '-16777216',
-      mname: '',
-      alias_type: '',
-      file_number: '22-12345',
-      lname: 'Beach',
-      patient_id: '2',
-      carecard: '1234231231',
-      is_alias: '0',
-      provider_id: '',
-      provider_name: '--None--',
-      email: ''
-    },
-    id: 2,
-    style: -1
-  }
-];
+const patients = [];
 
 export default {
   computed: {
@@ -298,7 +84,11 @@ export default {
         : this.userType === 'Patient'
           ? 'fullName'
           : 'title';
+    },
+    searchBySelectValue: function() {
+      return 'id';
     }
+
   },
   data: () => {
     const today = new Date();
@@ -311,7 +101,7 @@ export default {
       endDate: today.toISOString().substr(0, 10),
       userTypes: ['User', 'Patient', 'Role', 'None'],
       userType: 'User',
-      activityTypes: ['Activity 1', 'Activity 2', 'Activity 3'],
+      activityTypes: JSON.parse(window.support.getActivityTypes()),
       selectedActivityTypes: [],
       allActivityTypesSelected: false,
       includeAccessLogs: false,
@@ -479,11 +269,21 @@ export default {
       } else {
         this.personItems = this.roleList;
       }
+    },
+    search: function() {
+      const auditSearch = {
+        role: this.selectedPerson
+      };
+      window.auditlog.searchByRole(JSON.stringify(auditSearch));
     }
+
   },
   watch: {
-    patientSearchTerm: value => {
-      console.log(value);
+    patientSearchTerm: function(value) {
+      this.patientList = JSON.parse(window.support.patientSearch(value)).map(patient => {
+        patient.fullName = patient.values.fname + ' ' + patient.values.lname;
+        return patient;
+      });
     }
   }
 };
